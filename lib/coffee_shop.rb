@@ -1,35 +1,38 @@
+require 'coffee_shop/recipe'
+
 module CoffeeShop
   class Recipe
-    attr_reader :ingredients
+    APPLICABLE = ['lemon', 'sugar']
+    MAX_VALUE = {
+      'sugar' => 9
+    }
 
-    def initialize(name, ingredients)
+    attr_reader :name, :ingredients
+
+    def prepare(name, ingredients, changes = {})
       @name = name
       @ingredients = ingredients.dup
+      change(changes)
     end
 
     def change(new_values)
       new_values.each do |k, v|
-        next unless ['lemon', 'sugar'].include?(k) || ingredients.has_key?(k)
+        next unless APPLICABLE.include?(k) || ingredients.has_key?(k)
 
-        v = normalize_value(k, v)
-
-        value = ingredients.fetch(k, 0) + v
+        value = ingredients.fetch(k, 0) + normalize_value(k, v)
         ingredients[k] = value < 0 ? 0 : value
       end
     end
 
+    private
+
     def normalize_value(ingredient, value)
       if value < 0
         -1
-      elsif ingredient == 'sugar'
-        value > 9 ? 9 : value
       else
-        1
+        max = MAX_VALUE[ingredient] || 1
+        value > max ? max : value
       end
-    end
-
-    def to_s
-      @name
     end
   end
 
@@ -51,48 +54,47 @@ module CoffeeShop
 
     attr_reader :status, :stat
 
-    def initialize
+    def initialize(recipe = Recipe.new)
       @stat = Hash.new(0)
       @status = {}
+      @recipe = recipe
     end
 
     def load
       @status = Hash[INGREDIENTS.map { |i| [i, MAX_VOLUME] }]
     end
 
-    def order(recipe, changes = {})
-      ingredients = RECIPES[recipe]
-      return ingredients if ingredients.nil?
+    def order(recipe_name, changes = {})
+      ingredients = RECIPES[recipe_name]
+      return nil if ingredients.nil?
 
-      recipe = Recipe.new(recipe, ingredients)
-      recipe.change(changes)
-
-      make(recipe)
+      @recipe.prepare(recipe_name, ingredients, changes)
+      make
     end
 
     private
 
-    def make(recipe)
-      return nil unless available? recipe
+    def make
+      return nil unless available?
 
-      record_to_stat(recipe.to_s)
-      use_ingredients(recipe.ingredients)
+      use_ingredients
+      write_to_stat
 
       true
     end
 
-    def available?(recipe)
-      recipe.ingredients.all? do |ingredient, value|
+    def available?
+      @recipe.ingredients.all? do |ingredient, value|
         @status[ingredient] - value >= 0
       end
     end
 
-    def record_to_stat(recipe)
-      @stat[recipe] += 1
+    def write_to_stat
+      @stat[@recipe.name] += 1
     end
 
-    def use_ingredients(ingredients)
-      ingredients.each do |ingredient, value|
+    def use_ingredients
+      @recipe.ingredients.each do |ingredient, value|
         @status[ingredient] -= value
       end
     end

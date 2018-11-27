@@ -28,30 +28,26 @@ RSpec.describe CoffeeShop::CoffeeMachine do
 
     describe 'invalid recipe' do
       it 'should return nil' do
-        expect(subject.order('recipe out of list')).to be_nil
+        expect(subject.order('recipe not in the list')).to be_nil
       end
     end
 
     describe 'valid recipe' do
-      let(:recipe) { 'tea' }
-
-      before :each do
-        subject.load
-      end
+      let(:recipe_name) { 'tea' }
 
       it 'should return true' do
-        expect(subject.order(recipe)).to be_truthy
+        expect(subject.order(recipe_name)).to be_truthy
       end
 
-      describe 'should change machine states' do
-        it 'record order to stat' do
-          subject.order(recipe)
+      describe 'should change machine' do
+        it 'write order name to stat' do
+          subject.order(recipe_name)
           expect(subject.stat).to eq({'tea' => 1})
         end
 
-        it 'change machine status' do
+        it 'decrease count of available ingredients' do
           changes = {'tea' => 1, 'sugar' => -2, 'lemon' => 5, 'cream' => 1}
-          subject.order(recipe, changes)
+          subject.order(recipe_name, changes)
           status = subject.status
 
           expect(status['tea']).to eq(48)
@@ -61,9 +57,9 @@ RSpec.describe CoffeeShop::CoffeeMachine do
         end
       end
 
-      describe 'not enough ingredients' do
+      describe 'with not enough ingredients' do
         before :each do
-          50.times { subject.order('tea') }
+          50.times { subject.order(recipe_name) }
         end
 
         it 'sugar must be zero' do
