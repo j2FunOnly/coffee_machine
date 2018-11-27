@@ -1,5 +1,3 @@
-require 'coffee_shop/recipe'
-
 module CoffeeShop
   class Recipe
     APPLICABLE = ['lemon', 'sugar']
