@@ -1,18 +1,11 @@
 require 'coffee_shop'
 
 RSpec.describe CoffeeShop::CoffeeMachine do
-  describe '#initialize' do
-    it 'initialized with empty status' do
-      expect(subject.status).to eq({})
-    end
-
-    it 'initialized with empty stat' do
-      expect(subject.stat).to eq({})
-    end
-  end
-
   describe '#load' do
-    before(:each) { subject.load }
+    before :each do
+      subject.order('tea')
+      subject.load
+    end
 
     it 'load ingredients to max value' do
       expect(subject.status.values).to all(eq described_class::MAX_VOLUME)
@@ -24,8 +17,6 @@ RSpec.describe CoffeeShop::CoffeeMachine do
   end
 
   describe '#order' do
-    before(:each) { subject.load }
-
     describe 'invalid recipe' do
       it 'should return nil' do
         expect(subject.order('recipe not in the list')).to be_nil
@@ -59,7 +50,7 @@ RSpec.describe CoffeeShop::CoffeeMachine do
 
       describe 'with not enough ingredients' do
         before :each do
-          50.times { subject.order(recipe_name) }
+          25.times { subject.order(recipe_name) }
         end
 
         it 'sugar must be zero' do

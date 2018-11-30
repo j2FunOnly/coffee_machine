@@ -1,9 +1,9 @@
 module CoffeeShop
   class Recipe
-    APPLICABLE = ['lemon', 'sugar']
+    APPLICABLE = %w[lemon sugar].freeze
     MAX_VALUE = {
       'sugar' => 9
-    }
+    }.freeze
 
     attr_reader :name, :ingredients
 
@@ -15,7 +15,7 @@ module CoffeeShop
 
     def change(new_values)
       new_values.each do |k, v|
-        next unless APPLICABLE.include?(k) || ingredients.has_key?(k)
+        next unless APPLICABLE.include?(k) || ingredients.key?(k)
 
         value = ingredients.fetch(k, 0) + normalize_value(k, v)
         ingredients[k] = value < 0 ? 0 : value
@@ -35,7 +35,7 @@ module CoffeeShop
   end
 
   class CoffeeMachine
-    INGREDIENTS = %w(coffee tea chocolate cream lemon sugar)
+    INGREDIENTS = %w[coffee tea chocolate cream lemon sugar].freeze
     MAX_VOLUME = 50
 
     RECIPES = {
@@ -48,17 +48,17 @@ module CoffeeShop
         'cream' => 1,
         'sugar' => 1
       }
-    }
+    }.freeze
 
     attr_reader :status, :stat
 
     def initialize(recipe = Recipe.new)
-      @stat = Hash.new(0)
-      @status = {}
       @recipe = recipe
+      load
     end
 
     def load
+      @stat = Hash.new(0)
       @status = Hash[INGREDIENTS.map { |i| [i, MAX_VOLUME] }]
     end
 
@@ -83,18 +83,18 @@ module CoffeeShop
 
     def available?
       @recipe.ingredients.all? do |ingredient, value|
-        @status[ingredient] - value >= 0
+        status.fetch(ingredient) - value >= 0
       end
-    end
-
-    def write_to_stat
-      @stat[@recipe.name] += 1
     end
 
     def use_ingredients
       @recipe.ingredients.each do |ingredient, value|
-        @status[ingredient] -= value
+        status[ingredient] -= value
       end
+    end
+
+    def write_to_stat
+      stat[@recipe.name] += 1
     end
   end
 end
